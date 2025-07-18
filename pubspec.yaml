@@ -32,3 +32,8 @@ flutter:
     - .env
     - assets/destination-icon.png
     - assets/thunderstorm.svg
+    - assets/bad-weather-icon.svg
+    - assets/slippery-road-icon.svg
+    - assets/flood-icon.svg
+    - assets/unplowed-road-icon.svg
+    - assets/fog-icon.svg

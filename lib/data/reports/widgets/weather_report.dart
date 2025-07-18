@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:math';
 
@@ -17,7 +18,7 @@ enum WeatherReport {
 }
 
 class WeatherReportElement {
-  final Icon icon;
+  final Widget icon;
   final String name;
   final WeatherReport weatherReport;
   WeatherReportElement({required this.icon, required this.name, required this.weatherReport});
@@ -39,12 +40,12 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> {
   _WeatherConditionsWidgetState({required this.callback});
 
   List<WeatherReportElement> elements = [
-    WeatherReportElement(icon: Icon(Icons.air), name: 'Bad weather', weatherReport: WeatherReport.badWeather),
-    WeatherReportElement(icon: Icon(Icons.home), name: 'Slippery road', weatherReport: WeatherReport.slipparyRoad),
-    WeatherReportElement(icon: Icon(Icons.flood), name: 'Flood', weatherReport: WeatherReport.flood),
-    WeatherReportElement(icon: Icon(Icons.home), name: 'Unplowed road', weatherReport: WeatherReport.unplowedRoad),
-    WeatherReportElement(icon: Icon(Icons.foggy), name: 'Fog', weatherReport: WeatherReport.fog),
-    WeatherReportElement(icon: Icon(Icons.ac_unit), name: 'Icy road', weatherReport: WeatherReport.icyRoad)
+    WeatherReportElement(icon: SvgPicture.asset("assets/bad-weather-icon.svg", width: 100, height: 100,), name: 'Bad weather', weatherReport: WeatherReport.badWeather),
+    WeatherReportElement(icon: SvgPicture.asset("assets/slippery-road-icon.svg", width: 100, height: 100,), name: 'Slippery road', weatherReport: WeatherReport.slipparyRoad),
+    WeatherReportElement(icon: SvgPicture.asset("assets/flood-icon.svg", width: 100, height: 100,), name: 'Flood', weatherReport: WeatherReport.flood),
+    WeatherReportElement(icon: SvgPicture.asset("assets/unplowed-road-icon.svg"), name: 'Unplowed road', weatherReport: WeatherReport.unplowedRoad),
+    WeatherReportElement(icon: SvgPicture.asset("assets/fog-icon.svg", width: 100, height: 100,), name: 'Fog', weatherReport: WeatherReport.fog),
+    WeatherReportElement(icon: Icon(Icons.ac_unit, color: Color(0xFF4F4F4F),), name: 'Icy road', weatherReport: WeatherReport.icyRoad)
   ];
 
   @override
@@ -87,6 +88,7 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> {
         ),
         Container(
           width: width,
+          margin: EdgeInsets.only(top: height * 0.02),
           child: ListView.builder(
             physics: NeverScrollableScrollPhysics(),
             itemCount: ((elements.length + 2) / 3).toInt(),
@@ -105,24 +107,46 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> {
                   scrollDirection: Axis.horizontal,
                   itemBuilder: (context, j) {
                     return Container(
-                      width: width * 0.25,
                       height: width * 0.25,
+                      width: width * 0.25,
                       margin: EdgeInsets.only(left: width * 0.0625),
-                      decoration: BoxDecoration(
-                        border: selectedWeatherReport ==  elements[3 * i + j].weatherReport ? Border.all(width: 2, color: Colors.orangeAccent) : Border.all(width: 0, color: Colors.transparent),
-                        shape: BoxShape.circle
-                      ),
-                      child: IconButton(
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.grey.withValues(alpha: 0.1),
-                          iconSize: 40
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            selectedWeatherReport = elements[3 * i + j].weatherReport;
-                          });
-                        },
-                        icon: elements[3 * i + j].icon,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: width * 0.2,
+                            height: width * 0.2,
+                            decoration: BoxDecoration(
+                              border: selectedWeatherReport ==  elements[3 * i + j].weatherReport ? Border.all(width: 2, color: Colors.orangeAccent) : Border.all(width: 0, color: Colors.transparent),
+                              shape: BoxShape.circle
+                            ),
+                            child: IconButton(
+                              style: IconButton.styleFrom(
+                                backgroundColor: Color(0xFFF2F2F7),
+                                iconSize: width * 0.2
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  selectedWeatherReport = elements[3 * i + j].weatherReport;
+                                });
+                              },
+                              icon: SizedBox(
+                                width: width * 0.14,
+                                height: width * 0.14,
+                                child: FittedBox(
+                                  fit: BoxFit.fitWidth,
+                                  child: Center(
+                                    child: elements[3 * i + j].icon,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Center(
+                            child: Text(elements[3 * i + j].weatherReport.name, style: GoogleFonts.montserrat(color: Colors.black), maxLines: 1,),
+                          )
+                        ],
                       ),
                     );
                   },
@@ -159,7 +183,7 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> {
                 },
                 style: ElevatedButton.styleFrom(
                   shadowColor: Colors.transparent,
-                  backgroundColor: Color(0xFFFF6B00),
+                  backgroundColor: Color(0xFFFB9726),
                   padding: EdgeInsets.only(left: width * 0.02, right: width * 0.02, top: 12, bottom: 12)
                 ),
                 child: Center(

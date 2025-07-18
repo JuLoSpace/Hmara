@@ -435,9 +435,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      showAdIfAvailable();
-    }
+    // if (state == AppLifecycleState.resumed) {
+    //   showAdIfAvailable();
+    // }
   }
 
   void setAdEventListener({required AppOpenAd appOpenAd}) {
@@ -502,18 +502,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               ),
               onScrollListener: (context) {
                 if (!mounted) return;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  setState(() {
-                    isTracking = false;
-                  });
+                setState(() {
+                  isTracking = false;
                 });
               },
               onZoomListener: (context) {
                 if (!mounted) return;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  setState(() {
-                    isTracking = false;
-                  });
+                setState(() {
+                  isTracking = false;
                 });
               },
             ),
@@ -878,10 +874,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                     },
                     iconSize: 40,
                     style: IconButton.styleFrom(
-                      backgroundColor: Color(0xFFFF6B00),
+                      backgroundColor: Color(0xFFFB9726),
                       iconSize: 40,
                       padding: EdgeInsets.zero,
-                      overlayColor: Colors.amberAccent
+                      overlayColor: Colors.white
                     ),
                     padding: EdgeInsets.zero,
                     icon: Icon(Icons.warning, color: Colors.white,),
