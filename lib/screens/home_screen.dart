@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:yamka/data/application/application_storage.dart';
 import 'package:yamka/screens/widgets/callback_types.dart';
 import 'package:yamka/screens/widgets/reports_widget.dart';
+import 'package:yamka/screens/widgets/settings_widget.dart';
 import 'package:yamka/services/geocoding_service.dart';
 import 'package:yamka/services/route_service.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -16,9 +17,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart' as latlong;
 
 
-enum DraggableState {
+enum HomeState {
   places,
-  reports
+  reports,
+  settings
 }
 
 
@@ -31,7 +33,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, WidgetsBindingObserver {
 
-  DraggableState draggableState = DraggableState.places;
+  HomeState homeState = HomeState.places;
 
   TextEditingController textEditingController = TextEditingController();
 
@@ -86,11 +88,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   void onMapCreated(MapboxMap mapboxMap) async {
     this.mapboxMap = mapboxMap;
-    final provider = context.read<LocationProvider>();
     locationSubscription = context.read<LocationProvider>().positionStream.listen(updateMapPosition); 
     mapboxMap.location.updateSettings(
-      LocationComponentSettings(enabled: true, showAccuracyRing: true, puckBearingEnabled: true, accuracyRingColor: Color(0xFF61A2D0).withValues(alpha: 0.1).value,)
+      LocationComponentSettings(enabled: true, showAccuracyRing: true, puckBearingEnabled: true, accuracyRingColor: Color(0xFF61A2D0).withValues(alpha: 0.1).value)
     );
+    mapboxMap.compass.updateSettings(CompassSettings(enabled: false));
+    mapboxMap.attribution.updateSettings(AttributionSettings(enabled: false));
+    mapboxMap.scaleBar.updateSettings(ScaleBarSettings(enabled: false));
     pointAnnotationManager = await mapboxMap.annotations.createPointAnnotationManager();
     final ByteData bytes = await rootBundle.load('assets/destination-icon.png');
     destinationIconData = bytes.buffer.asUint8List();
@@ -368,7 +372,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   void closeReportWidget() {
     setState(() {
-      draggableState = DraggableState.places;
+      homeState = HomeState.places;
     });
   }
 
@@ -384,7 +388,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
           }
           case CallbackType.jumpTo: {
-
             animatedJumpTo(size!);
           }
         }
@@ -522,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               maxChildSize: maxHeight,
               snap: true,
               expand: true,
-              snapSizes: draggableState == DraggableState.places ? [0.4, maxHeight] : [widgetSize],
+              snapSizes: homeState == HomeState.places ? [0.4, maxHeight] : [widgetSize],
               builder: (context, scrollController) {
                 return GestureDetector(
                   onTap: () {
@@ -543,11 +546,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                       children: [
                         Expanded(
                           child: ListView(
-                            physics: draggableState == DraggableState.places ? ScrollPhysics() : NeverScrollableScrollPhysics(),
+                            physics: homeState == HomeState.places ? ScrollPhysics() : NeverScrollableScrollPhysics(),
                             controller: scrollController,
                             padding: EdgeInsets.zero,
                             children: [
-                              draggableState == DraggableState.places ? ValueListenableBuilder<double>(
+                              homeState == HomeState.places ? ValueListenableBuilder<double>(
                                 valueListenable: iconPosition,
                                 builder: (context, value, child) {
                                   return value != maxHeight ? Row(
@@ -566,7 +569,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                   ) : Container();
                                 },
                               ) : Container(),
-                              draggableState == DraggableState.places ? Column(
+                              homeState == HomeState.places ? Column(
                                 children: [
                                   ValueListenableBuilder<double>(
                                     valueListenable: iconPosition,
@@ -852,7 +855,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               ) : Container();
             },
           ),
-          draggableState == DraggableState.places ? ValueListenableBuilder<double>(
+          homeState == HomeState.places ? ValueListenableBuilder<double>(
             valueListenable: iconPosition,
             builder: (context, value, child) {
               return value != maxHeight ? Positioned(
@@ -864,7 +867,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                   child: IconButton(
                     onPressed: () {
                       // update draggable
-                      draggableState = DraggableState.reports;
+                      homeState = HomeState.reports;
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         setState(() {
                           
@@ -885,7 +888,53 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 ) : Container()
               ) : Container();
             },
-          ) : Container()
+          ) : Container(),
+          ValueListenableBuilder<double>(
+            valueListenable: iconPosition,
+            builder: (context, value, child) {
+              return value < 0.65 ? Positioned(
+                left: 10,
+                top: height * 0.06,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  child: Center(
+                    child: SizedBox(
+                      width: value < 0.6 ? 60 : 60 - 600 * (value - 0.6),
+                      height: value < 0.6 ? 60 : 60 - 600 * (value - 0.6),
+                      child: IconButton(
+                        onPressed: () {
+                          setState(() {
+                            homeState = HomeState.settings;
+                          });
+                        },
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          iconSize: value < 0.6 ? 30 : 30 - 300 * (value - 0.6),
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadiusGeometry.circular(16)
+                          )
+                        ),
+                        icon: Center(
+                          child: Icon(Icons.dehaze, color: Colors.black,),
+                        )
+                      ),
+                    ),
+                  )
+                )
+              ) : Container();
+            },
+          ),
+          AnimatedPositioned(
+            bottom: homeState == HomeState.settings ? 0 : -height,
+            duration: Duration(milliseconds: 400),
+            child: SettingsWidget(callback: () {
+              setState(() {
+                homeState = HomeState.places;
+              });
+            },)
+          )
         ],
       )
     );

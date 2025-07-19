@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yamka/providers/location_provider.dart';
 import 'package:yamka/screens/home_screen.dart';
+import 'package:yamka/screens/splash_screen.dart';
 import 'package:yandex_mobileads/mobile_ads.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -50,7 +51,7 @@ class HmaraApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: HomeScreen(),
+        home: SplashScreen(),
       ),
     );
   }

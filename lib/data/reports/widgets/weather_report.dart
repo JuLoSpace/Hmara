@@ -1,5 +1,4 @@
-import 'dart:ffi';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,7 +32,7 @@ class WeatherConditionsWidget extends StatefulWidget {
 }
 
 
-class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> {
+class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> with TickerProviderStateMixin {
 
   final void Function(CallbackType callbackType, double? size) callback;
   
@@ -48,15 +47,43 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> {
     WeatherReportElement(icon: Icon(Icons.ac_unit, color: Color(0xFF4F4F4F),), name: 'Icy road', weatherReport: WeatherReport.icyRoad)
   ];
 
+  late AnimationController reportAnimationController;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       callback(CallbackType.jumpTo, 0.6);
     });
+    reportAnimationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 8)
+    );
+  }
+
+  final ValueNotifier<double> autoSend = ValueNotifier(0.0);
+
+  void animateReport() {
+    final animation = Tween<double>(
+      begin: 0.0,
+      end: 1.0
+    ).animate(CurvedAnimation(
+      parent: reportAnimationController,
+      curve: Curves.easeIn
+    ));
+    animation.addListener(() {
+      autoSend.value = animation.value;
+    });
+    reportAnimationController.forward(from: 0.0);
   }
 
   WeatherReport? selectedWeatherReport;
+
+  @override
+  void dispose() {
+    super.dispose();
+    reportAnimationController.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +154,9 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> {
                                 iconSize: width * 0.2
                               ),
                               onPressed: () {
+                                if (!reportAnimationController.isAnimating && !reportAnimationController.isCompleted) {
+                                  animateReport();
+                                }
                                 setState(() {
                                   selectedWeatherReport = elements[3 * i + j].weatherReport;
                                 });
@@ -160,6 +190,7 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> {
           children: [
             Container(
               width: width * 0.4,
+              height: 54,
               margin: EdgeInsets.only(left: width * 0.04),
               child: ElevatedButton(
                 onPressed: () {
@@ -168,6 +199,9 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> {
                 style: ElevatedButton.styleFrom(
                   shadowColor: Colors.transparent,
                   backgroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)
+                  ),
                   padding: EdgeInsets.only(left: width * 0.02, right: width * 0.02, top: 12, bottom: 12)
                 ),
                 child: Center(
@@ -175,21 +209,53 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> {
                 ),
               ),
             ),
-            Container(
-              width: width * 0.4,
-              margin: EdgeInsets.only(right: width * 0.04),
-              child: ElevatedButton(
-                onPressed: () {
-                },
-                style: ElevatedButton.styleFrom(
-                  shadowColor: Colors.transparent,
-                  backgroundColor: Color(0xFFFB9726),
-                  padding: EdgeInsets.only(left: width * 0.02, right: width * 0.02, top: 12, bottom: 12)
-                ),
-                child: Center(
-                  child: Text('Report', style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 18),),
-                ),
-              ),
+            ValueListenableBuilder(
+              valueListenable: autoSend,
+              builder: (context, value, child) {
+                return Container(
+                  width: width * 0.4,
+                  height: 54,
+                  margin: EdgeInsets.only(right: width * 0.04),
+                  child: ElevatedButton(
+                    onPressed: () {
+                    },
+                    style: ElevatedButton.styleFrom(
+                      shadowColor: Colors.transparent,
+                      backgroundColor: Color(0xFFFB9726),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)
+                      ),
+                      padding: EdgeInsets.only()
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: width * 0.4 * value,
+                              height: 54,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(16)
+                              ),
+                            )
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text('Report', style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 18),)
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                );
+              },
             )
           ],
         )
