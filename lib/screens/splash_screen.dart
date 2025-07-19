@@ -71,7 +71,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       children: [
                         Container(
                           margin: EdgeInsets.only(top: 12),
-                          child: Text('Travel. Report. Discover', style: GoogleFonts.montserrat(color: Colors.black.withValues(alpha: value), fontWeight: FontWeight.w600, fontSize: 18),),
+                          child: Text('Travel. Report. Discover', style: GoogleFonts.montserrat(fontWeight: FontWeight.w600, fontSize: 18),),
                         )
                       ],
                     )

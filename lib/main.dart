@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:yamka/providers/location_provider.dart';
+import 'package:yamka/providers/theme_provider.dart';
 import 'package:yamka/screens/home_screen.dart';
 import 'package:yamka/screens/splash_screen.dart';
 import 'package:yandex_mobileads/mobile_ads.dart';
@@ -32,12 +34,12 @@ void main() async {
 
   await setup();
 
-  runApp(const HmaraApp());
+  runApp(HmaraApp());
 }
 
 class HmaraApp extends StatelessWidget {
 
-  const HmaraApp({super.key});
+  HmaraApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +49,30 @@ class HmaraApp extends StatelessWidget {
           final provider = LocationProvider();
           provider.initializateLocator();
           return provider;
-        },)
+        },),
+        ChangeNotifierProvider(create: (_) {
+          final provider = ThemeProvider();
+          provider.initializate();
+          return provider;
+        })
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: SplashScreen(),
-      ),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData.light(),
+            darkTheme: ThemeData(
+              scaffoldBackgroundColor: Color(0xFF252525),
+              textTheme: TextTheme(
+                bodyMedium: GoogleFonts.montserrat(color: Colors.white),
+                titleLarge: GoogleFonts.montserrat(color: Colors.white)
+              )
+            ),
+            themeMode: themeProvider.themeMode,
+            home: HomeScreen(),
+          );
+        },
+      )
     );
   }
 }

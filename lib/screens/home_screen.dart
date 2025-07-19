@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yamka/data/application/application_storage.dart';
+import 'package:yamka/providers/theme_provider.dart';
 import 'package:yamka/screens/widgets/callback_types.dart';
 import 'package:yamka/screens/widgets/reports_widget.dart';
 import 'package:yamka/screens/widgets/settings_widget.dart';
@@ -78,8 +79,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       vsync: this,
       duration: const Duration(milliseconds: 300)
     );
-    appOpenAdLoader = createAppOpenAdLoader();
-    loadAppOpenAd();
+    // appOpenAdLoader = createAppOpenAdLoader();
+    // loadAppOpenAd();
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -125,10 +126,29 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         }
       }
     }
+
+    String? cameraOptionsData = await ApplicationStorage.getCameraOptions;
+
+    if (cameraOptionsData != null) {
+      try {
+        final jsonData = jsonDecode(cameraOptionsData);
+        String lng = jsonData['center']['longitude'] as String, lat = jsonData['center']['latitude'] as String, zoom = jsonData['zoom'] as String;
+        cameraOptionsSaved = CameraOptions(
+          center: Point(
+            coordinates: Position(double.parse(lng), double.parse(lat)),
+          ),
+          zoom: double.parse(zoom)
+        );
+      } catch (e) {
+        print(e);
+        cameraOptionsSaved = null;
+      }
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {
-        
+        isInitializated = true;
       });
     });
   }
@@ -155,6 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           duration: 1000
         )
       );
+      updateCameraOptions();
     }
   }
 
@@ -487,9 +508,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   double widgetSize = 0.4;
 
+  CameraOptions? cameraOptionsSaved;
+  CameraState? cameraState;
+
+  bool isInitializated = false;
+
+  void updateCameraOptions() async {
+    if (isInitializated) {
+      await ApplicationStorage.setCameraOptions(
+        jsonEncode({
+          'zoom': cameraState?.zoom.toDouble().toString(),
+          'center': {
+            'latitude': cameraState?.center.coordinates.lat.toDouble().toString(),
+            'longitude': cameraState?.center.coordinates.lng.toDouble().toString()
+          }
+        })
+      );
+      cameraOptionsSaved = CameraOptions(
+        zoom: cameraState?.zoom,
+        center: Point(
+          coordinates: Position(cameraState!.center.coordinates.lng, cameraState!.center.coordinates.lat)
+        )
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     locationProvider = context.watch<LocationProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     return Scaffold(
@@ -497,12 +544,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         children: [
           Positioned.fill(
             child: MapWidget(
-              styleUri: MapboxStyles.STANDARD,
+              styleUri: themeProvider.themeMode == ThemeMode.light ? MapboxStyles.STANDARD : MapboxStyles.DARK,
               onMapCreated: onMapCreated,
-              key: const ValueKey<String>('mapWidget'),
-              cameraOptions: CameraOptions(
-                zoom: 10
+              key: ValueKey(themeProvider.themeMode),
+              cameraOptions: cameraOptionsSaved ?? CameraOptions(
+                zoom: 10,
               ),
+              onCameraChangeListener: (cameraChangedEventData) {
+                cameraState = cameraChangedEventData.cameraState;
+                updateCameraOptions();
+              },
               onScrollListener: (context) {
                 if (!mounted) return;
                 setState(() {
@@ -539,7 +590,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: themeProvider.themeMode == ThemeMode.light ? Colors.white : Color(0xFF252525),
                       borderRadius: BorderRadius.vertical(top: Radius.circular(24))
                     ),
                     child: Column(
@@ -561,7 +612,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                         width: 60,
                                         margin: EdgeInsets.only(top: 12),
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.2),
+                                          color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Color(0xFF252525),
                                           borderRadius: BorderRadius.circular(16)
                                         ),
                                       ),
@@ -582,13 +633,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                               height: 54,
                                               margin: EdgeInsets.only(top: value != maxHeight ? height * 0.02 : height * 0.06),
                                               decoration: BoxDecoration(
-                                                color: Colors.grey.withValues(alpha: 0.1),
+                                                color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Colors.grey.withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(16)
                                               ),
                                               padding: EdgeInsets.only(left: width * 0.03),
                                               child: Row(
                                                 children: [
-                                                  Icon(Icons.search, color: Colors.black.withValues(alpha: 0.6), size: 30,),
+                                                  Icon(Icons.search, color: themeProvider.themeMode == ThemeMode.dark ? Color(0xFF252525) : Colors.black.withValues(alpha: 0.6), size: 30,),
                                                   Expanded(
                                                     child: TextField(
                                                       controller: textEditingController,
@@ -690,8 +741,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                         child: ElevatedButton(
                                           onPressed: () {},
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.grey.withValues(alpha: 0.1),
+                                            backgroundColor: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Colors.grey.withValues(alpha: 0.1),
                                             shadowColor: Colors.transparent,
+                                            overlayColor: Colors.black,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadiusGeometry.circular(16)
                                             )
@@ -700,8 +752,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                             child: Row(
                                               crossAxisAlignment: CrossAxisAlignment.center,
                                               children: [
-                                                Icon(Icons.home, color: Colors.black, size: 40,),
-                                                Text('Home', style: GoogleFonts.montserrat(color: Color(0xFF1A1A1A), fontSize: 16, fontWeight: FontWeight.w700),)
+                                                Icon(Icons.home, color: Color(0xFF252525), size: 40,),
+                                                Text('Home', style: GoogleFonts.montserrat(color: Color(0xFF252525), fontSize: 16, fontWeight: FontWeight.w700),)
                                               ],
                                             ),
                                           ),
@@ -713,8 +765,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                         child: ElevatedButton(
                                           onPressed: () {},
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.grey.withValues(alpha: 0.1),
+                                            backgroundColor: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Colors.grey.withValues(alpha: 0.1),
                                             shadowColor: Colors.transparent,
+                                            overlayColor: Colors.black,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadiusGeometry.circular(16)
                                             )
@@ -723,8 +776,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                             child: Row(
                                               crossAxisAlignment: CrossAxisAlignment.center,
                                               children: [
-                                                Icon(Icons.work, color: Colors.black, size: 40,),
-                                                Text('Work', style: GoogleFonts.montserrat(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w700),)
+                                                Icon(Icons.work, color: Color(0xFF252525), size: 40,),
+                                                Text('Work', style: GoogleFonts.montserrat(color: Color(0xFF252525), fontSize: 16, fontWeight: FontWeight.w700),)
                                               ],
                                             ),
                                           ),
@@ -736,7 +789,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                     children: [
                                       Container(
                                         margin: EdgeInsets.only(left: width * 0.05, top: 12),
-                                        child: Text('Недавание', style: GoogleFonts.montserrat(color: Colors.black, fontSize: 12),),
+                                        child: Text('Недавание', style: GoogleFonts.montserrat(color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Color(0xFF252525), fontSize: 12),),
                                       )
                                     ],
                                   ),
@@ -769,7 +822,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                                       children: [
                                                         Container(
                                                           margin: EdgeInsets.only(left: 12),
-                                                          child: Icon(Icons.restore, color: Colors.black, size: 30,),
+                                                          child: Icon(Icons.restore, color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Color(0xFF252525), size: 30,),
                                                         ),
                                                         Container(
                                                           margin: EdgeInsets.only(left: 12),
@@ -778,11 +831,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                                             children: [
                                                               SizedBox(
                                                                 width: width * 0.6,
-                                                                child: Text(recentlyPlaces[index]['name'].toString(), style: GoogleFonts.montserrat(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 20), maxLines: 1,),
+                                                                child: Text(recentlyPlaces[index]['name'].toString(), style: GoogleFonts.montserrat(color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Color(0xFF252525), fontWeight: FontWeight.w600, fontSize: 20), maxLines: 1,),
                                                               ),
                                                               SizedBox(
                                                                 width: width * 0.6,
-                                                                child: Text(recentlyPlaces[index]['address'] ?? '', style: GoogleFonts.montserrat(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 16), maxLines: 1,),
+                                                                child: Text(recentlyPlaces[index]['address'] ?? '', style: GoogleFonts.montserrat(color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Color(0xFF252525), fontWeight: FontWeight.w400, fontSize: 16), maxLines: 1,),
                                                               )
                                                             ],
                                                           ),
@@ -828,26 +881,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                     },
                     iconSize: 40,
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white,
+                      backgroundColor: themeProvider.themeMode == ThemeMode.light ? Colors.white : Color(0xFF252525),
                       iconSize: 40,
                       padding: EdgeInsets.zero,
                       overlayColor: Colors.black
                     ),
-                    icon: Icon(Icons.near_me, color: Colors.black,),
+                    icon: Icon(Icons.near_me, color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Color(0xFF252525),),
                   ),
                 ) : Container(
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white
+                    color: themeProvider.themeMode == ThemeMode.light ? Colors.white : Color(0xFF252525)
                   ),
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(locationProvider.currentPosition!.speed.round().toString(), style: GoogleFonts.montserrat(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 18),),
-                        Text('Km/h', style: GoogleFonts.montserrat(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 10),)
+                        Text(locationProvider.currentPosition!.speed.round().toString(), style: GoogleFonts.montserrat(color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Color(0xFF252525), fontWeight: FontWeight.w500, fontSize: 18),),
+                        Text('Km/h', style: GoogleFonts.montserrat(color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Color(0xFF252525), fontWeight: FontWeight.w500, fontSize: 10),)
                       ],
                     ),
                   ),
@@ -883,7 +936,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                       overlayColor: Colors.white
                     ),
                     padding: EdgeInsets.zero,
-                    icon: Icon(Icons.warning, color: Colors.white,),
+                    icon: Icon(Icons.warning, color: themeProvider.themeMode == ThemeMode.light ? Colors.white : Color(0xFF252525),),
                   ),
                 ) : Container()
               ) : Container();
@@ -909,7 +962,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                           });
                         },
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.white,
+                          backgroundColor: themeProvider.themeMode == ThemeMode.light ? Colors.white : Color(0xFF252525),
                           iconSize: value < 0.6 ? 30 : 30 - 300 * (value - 0.6),
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
@@ -917,7 +970,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                           )
                         ),
                         icon: Center(
-                          child: Icon(Icons.dehaze, color: Colors.black,),
+                          child: Icon(Icons.dehaze, color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Color(0xFF252525),),
                         )
                       ),
                     ),

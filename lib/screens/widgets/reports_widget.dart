@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:yamka/providers/theme_provider.dart';
 import 'package:yamka/screens/widgets/callback_types.dart';
 import '../../data/reports/reports.dart';
 import 'dart:math';
@@ -34,6 +36,7 @@ class _ReportsWidgetState extends State<ReportsWidget> {
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
+    final themeProvider = context.watch<ThemeProvider>();
     return currentReport == null ? Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -45,12 +48,12 @@ class _ReportsWidgetState extends State<ReportsWidget> {
             children: [
               Container(
                 margin: EdgeInsets.only(left: width * 0.04),
-                child: Text('Отправить отчёт', style: GoogleFonts.montserrat(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 24),),
+                child: Text('Send report', style: GoogleFonts.montserrat(color: themeProvider.themeMode == ThemeMode.light ? Colors.black : Colors.white, fontWeight: FontWeight.w600, fontSize: 24),),
               ),
               Container(
                 margin: EdgeInsets.only(right: width * 0.02),
                 child: IconButton(
-                  icon: Icon(Icons.close, size: 35,),
+                  icon: Icon(Icons.close, size: 35, color: themeProvider.themeMode == ThemeMode.light ? Colors.black : Colors.white,),
                   onPressed: () {
                     callback(CallbackType.close, null);
                   },
@@ -125,7 +128,10 @@ class _ReportsWidgetState extends State<ReportsWidget> {
                                   width: width * 0.2,
                                   child: FittedBox(
                                     fit: BoxFit.contain,
-                                    child: ReportWidgets.allReportWidgets()[3 * i + j].icon,
+                                    child: Icon(
+                                      ReportWidgets.allReportWidgets()[3 * i + j].icon,
+                                      color: themeProvider.themeMode == ThemeMode.light ? Colors.black : Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -134,7 +140,7 @@ class _ReportsWidgetState extends State<ReportsWidget> {
                           Container(
                             width: width * 0.25,
                             child: Center(
-                              child: Text(ReportWidgets.allReportWidgets()[3 * i + j].report.name, style: GoogleFonts.montserrat(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 14), maxLines: 1, softWrap: false,),
+                              child: Text(ReportWidgets.allReportWidgets()[3 * i + j].report.name, style: GoogleFonts.montserrat(color: themeProvider.themeMode == ThemeMode.light ? Colors.black : Colors.white, fontWeight: FontWeight.w500, fontSize: 14), maxLines: 1, softWrap: false,),
                             ),
                           )
                         ],

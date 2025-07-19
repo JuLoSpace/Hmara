@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:yamka/providers/theme_provider.dart';
 import 'dart:math';
 
 import 'package:yamka/screens/widgets/callback_types.dart';
@@ -57,7 +59,7 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> with 
     });
     reportAnimationController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 8)
+      duration: Duration(seconds: 5)
     );
   }
 
@@ -69,7 +71,7 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> with 
       end: 1.0
     ).animate(CurvedAnimation(
       parent: reportAnimationController,
-      curve: Curves.easeIn
+      curve: Curves.linear
     ));
     animation.addListener(() {
       autoSend.value = animation.value;
@@ -89,6 +91,7 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> with 
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
+    final themeProvider = context.watch<ThemeProvider>();
     return Column(
       children: [
         Container(
@@ -99,12 +102,12 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> with 
             children: [
               Container(
                 margin: EdgeInsets.only(left: width * 0.04),
-                child: Text('Report bad weather', style: GoogleFonts.montserrat(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 24),),
+                child: Text('Report bad weather', style: GoogleFonts.montserrat(color: themeProvider.themeMode == ThemeMode.light ? Colors.black : Colors.white, fontWeight: FontWeight.w600, fontSize: 24),),
               ),
               Container(
                 margin: EdgeInsets.only(right: width * 0.02),
                 child: IconButton(
-                  icon: Icon(Icons.close, size: 35,),
+                  icon: Icon(Icons.close, size: 35, color: themeProvider.themeMode == ThemeMode.light ? Colors.black : Colors.white,),
                   onPressed: () {
                     callback(CallbackType.close, null);
                   },
@@ -174,7 +177,7 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> with 
                             ),
                           ),
                           Center(
-                            child: Text(elements[3 * i + j].weatherReport.name, style: GoogleFonts.montserrat(color: Colors.black), maxLines: 1,),
+                            child: Text(elements[3 * i + j].weatherReport.name, style: GoogleFonts.montserrat(color: themeProvider.themeMode == ThemeMode.light ? Colors.black : Colors.white), maxLines: 1,),
                           )
                         ],
                       ),
@@ -225,7 +228,7 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> with 
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)
                       ),
-                      padding: EdgeInsets.only()
+                      padding: EdgeInsets.zero
                     ),
                     child: Stack(
                       alignment: Alignment.center,
@@ -238,7 +241,7 @@ class _WeatherConditionsWidgetState extends State<WeatherConditionsWidget> with 
                               width: width * 0.4 * value,
                               height: 54,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.3),
+                                color: themeProvider.themeMode == ThemeMode.light ? Colors.white.withValues(alpha: 0.3) : Color(0xFF252525).withValues(alpha: 0.3),
                                 borderRadius: BorderRadius.circular(16)
                               ),
                             )

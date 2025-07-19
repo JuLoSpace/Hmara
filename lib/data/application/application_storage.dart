@@ -10,9 +10,13 @@ class ApplicationStorage {
   );
 
   static Future<String?> get getRecentlyPlaces async => await storage.read(key: 'recentlyPlaces');
+  static Future<String?> get getCameraOptions async => await storage.read(key: 'cameraOptions');
+  static Future<String?> get getTheme async => await storage.read(key: 'theme');
 
 
   static Future setRecentlyPlaces(String places) async => await storage.write(key: 'recentlyPlaces', value: places);
+  static Future setCameraOptions(String options) async => await storage.write(key: 'cameraOptions', value: options);
+  static Future setTheme(String theme) async => await storage.write(key: 'theme', value: theme);
   static Future removeAllData() async => await storage.deleteAll();
 
   Future<void> updateRecentlyPlaces(Map<String, dynamic> place) async {

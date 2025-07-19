@@ -19,15 +19,15 @@ class SosReport extends Report {
 class ReportWidget {
   final dynamic report;
   final Widget widget;
-  final Widget icon;
+  final IconData icon;
   ReportWidget({required this.report, required this.icon, required this.widget});
 }
 
 class ReportWidgets {
-  static List<ReportWidget> allReportWidgets({void Function(CallbackType callbackType, double? size)? voidCallback}) {
+  static List<ReportWidget> allReportWidgets({void Function(CallbackType callbackType, double? size,)? voidCallback}) {
     return [
-      ReportWidget(report: WeatherConditionsReport(), icon: Icon(Icons.thunderstorm, color: Colors.black,), widget: WeatherConditionsWidget(callback: voidCallback ?? (_, _) {},)),
-      ReportWidget(report: SosReport(), icon: Icon(Icons.support, color: Colors.black), widget: Container()),
+      ReportWidget(report: WeatherConditionsReport(), icon: Icons.thunderstorm, widget: WeatherConditionsWidget(callback: voidCallback ?? (_, _) {},)),
+      ReportWidget(report: SosReport(), icon: Icons.support, widget: Container()),
     ];
   }
 }
